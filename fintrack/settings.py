@@ -6,8 +6,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-dev-secret-key-change-in-production-zorvyn-fintrack'
 DEBUG = False
 
-ALLOWED_HOSTS = ['*']
-
+ALLOWED_HOSTS = ['https://web-production-0e18.up.railway.app/users/login/']
+CSRF_TRUSTED_ORIGINS = [
+    "https://web-production-0e18.up.railway.app/users/login/",
+]
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
