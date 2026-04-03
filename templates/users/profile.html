@@ -1,0 +1,75 @@
+{% extends "base/base.html" %}
+{% block title %}Profile{% endblock %}
+{% block page_title %}Profile{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-heading">My Profile</div>
+</div>
+
+<div class="card form-card" style="max-width:480px;">
+    <div class="card-header">
+        <div style="display:flex; align-items:center; gap:14px;">
+            <div class="user-avatar" style="width:44px; height:44px; font-size:18px; border-radius:50%;">
+                {{ profile_user.username|first|upper }}
+            </div>
+            <div>
+                <div style="font-size:16px; font-weight:600;">{{ profile_user.get_full_name|default:profile_user.username }}</div>
+                <div class="user-role {{ profile_user.get_role_display_badge }}">{{ profile_user.get_role_display }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="detail-grid">
+            <div class="detail-item">
+                <div class="detail-label">Username</div>
+                <div class="detail-value td-mono">{{ profile_user.username }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Email</div>
+                <div class="detail-value">{{ profile_user.email|default:"Not set" }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Role</div>
+                <div class="detail-value user-role {{ profile_user.get_role_display_badge }}">
+                    {{ profile_user.get_role_display }}
+                </div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Member Since</div>
+                <div class="detail-value">{{ profile_user.created_at|date:"d F Y" }}</div>
+            </div>
+        </div>
+
+        <div style="margin-top:20px; padding:14px; background:var(--bg-elevated); border-radius:var(--radius); font-size:13px;">
+            <div style="font-weight:600; color:var(--text-secondary); margin-bottom:8px;">Access Permissions</div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="color:{% if profile_user.is_viewer %}var(--income){% else %}var(--text-muted){% endif %};">
+                        {% if profile_user.is_viewer %}✓{% else %}✗{% endif %}
+                    </span>
+                    <span style="color:var(--text-secondary);">View transactions and summaries</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="color:{% if profile_user.is_analyst %}var(--income){% else %}var(--text-muted){% endif %};">
+                        {% if profile_user.is_analyst %}✓{% else %}✗{% endif %}
+                    </span>
+                    <span style="color:var(--text-secondary);">Access analytics and export data</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="color:{% if profile_user.is_admin %}var(--income){% else %}var(--text-muted){% endif %};">
+                        {% if profile_user.is_admin %}✓{% else %}✗{% endif %}
+                    </span>
+                    <span style="color:var(--text-secondary);">Create, edit, delete records and manage users</span>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top:16px;">
+            <a href="{% url 'logout' %}" class="btn btn-danger" style="width:100%; justify-content:center;">
+                Sign Out
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

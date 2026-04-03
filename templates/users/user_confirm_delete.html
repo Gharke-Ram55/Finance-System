@@ -1,0 +1,46 @@
+{% extends "base/base.html" %}
+{% block title %}Remove User{% endblock %}
+{% block page_title %}Remove User{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-heading">Remove User</div>
+    <a href="{% url 'user_list' %}" class="btn btn-secondary">← Cancel</a>
+</div>
+
+<div class="card confirm-card">
+    <div class="card-body">
+        <div class="confirm-warning">
+            ⚠ You are about to permanently remove <strong>{{ target_user.username }}</strong> from the system.
+            This will also remove their association from any transactions they created.
+        </div>
+        <div class="detail-grid" style="margin-bottom:24px;">
+            <div class="detail-item">
+                <div class="detail-label">Username</div>
+                <div class="detail-value">{{ target_user.username }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Role</div>
+                <div class="detail-value user-role {{ target_user.get_role_display_badge }}">
+                    {{ target_user.get_role_display }}
+                </div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Email</div>
+                <div class="detail-value">{{ target_user.email|default:"—" }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Joined</div>
+                <div class="detail-value">{{ target_user.created_at|date:"d M Y" }}</div>
+            </div>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <div class="btn-group">
+                <button type="submit" class="btn btn-danger">Yes, Remove User</button>
+                <a href="{% url 'user_list' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

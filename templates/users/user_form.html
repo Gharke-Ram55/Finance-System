@@ -1,0 +1,109 @@
+{% extends "base/base.html" %}
+{% block title %}{{ action }} User{% endblock %}
+{% block page_title %}{{ action }} User{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-heading">{{ action }} User</div>
+        {% if action == 'Edit' and edit_user %}
+        <div class="page-sub">Editing account for <strong>{{ edit_user.username }}</strong></div>
+        {% endif %}
+    </div>
+    <a href="{% url 'user_list' %}" class="btn btn-secondary">← Back</a>
+</div>
+
+<div class="card form-card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+
+            {% if action == 'Create' %}
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Username *</label>
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                    <div class="form-error">{{ form.username.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Role *</label>
+                    {{ form.role }}
+                    {% if form.role.errors %}
+                    <div class="form-error">{{ form.role.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">First Name</label>
+                    {{ form.first_name }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Last Name</label>
+                    {{ form.last_name }}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                {{ form.email }}
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Password *</label>
+                    {{ form.password }}
+                    {% if form.password.errors %}
+                    <div class="form-error">{{ form.password.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Confirm Password *</label>
+                    {{ form.confirm_password }}
+                </div>
+            </div>
+
+            {% else %}
+            <!-- Edit mode: no username/password fields -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">First Name</label>
+                    {{ form.first_name }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Last Name</label>
+                    {{ form.last_name }}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                {{ form.email }}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Role</label>
+                {{ form.role }}
+                {% if form.role.errors %}
+                <div class="form-error">{{ form.role.errors.0 }}</div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if form.non_field_errors %}
+            <div class="alert alert-error" style="margin-bottom:16px;">{{ form.non_field_errors.0 }}</div>
+            {% endif %}
+
+            <div class="btn-group" style="margin-top:8px;">
+                <button type="submit" class="btn btn-primary">
+                    {% if action == 'Edit' %}Save Changes{% else %}Create User{% endif %}
+                </button>
+                <a href="{% url 'user_list' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

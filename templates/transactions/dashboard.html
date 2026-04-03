@@ -1,0 +1,219 @@
+{% extends "base/base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-heading">Good to see you, {{ user.get_full_name|default:user.username }} 👋</div>
+        <div class="page-sub">Here's a snapshot of your financial activity.</div>
+    </div>
+    {% if user.is_admin %}
+    <div class="btn-group">
+        <a href="{% url 'transaction_create' %}" class="btn btn-primary">+ Add Transaction</a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Summary stats -->
+<div class="stats-grid">
+    <div class="stat-card income">
+        <div class="stat-label">Total Income</div>
+        <div class="stat-value income-color">₹{{ stats.summary.total_income|floatformat:2 }}</div>
+        <div class="stat-sub">All time</div>
+    </div>
+    <div class="stat-card expense">
+        <div class="stat-label">Total Expenses</div>
+        <div class="stat-value expense-color">₹{{ stats.summary.total_expense|floatformat:2 }}</div>
+        <div class="stat-sub">All time</div>
+    </div>
+    <div class="stat-card balance">
+        <div class="stat-label">Net Balance</div>
+        <div class="stat-value {% if stats.summary.balance >= 0 %}balance-color{% else %}balance-negative{% endif %}">
+            ₹{{ stats.summary.balance|floatformat:2 }}
+        </div>
+        <div class="stat-sub">Income minus Expenses</div>
+    </div>
+    <div class="stat-card neutral">
+        <div class="stat-label">Total Records</div>
+        <div class="stat-value" style="color:var(--text-primary)">{{ stats.total_transactions }}</div>
+        <div class="stat-sub">Transactions logged</div>
+    </div>
+</div>
+
+<!-- This month -->
+<div class="stats-grid" style="grid-template-columns: repeat(3,1fr); margin-bottom:24px;">
+    <div class="stat-card">
+        <div class="stat-label">This Month — Income</div>
+        <div class="stat-value income-color">₹{{ stats.this_month.total_income|floatformat:2 }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">This Month — Expenses</div>
+        <div class="stat-value expense-color">₹{{ stats.this_month.total_expense|floatformat:2 }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">This Month — Net</div>
+        <div class="stat-value {% if stats.this_month.balance >= 0 %}income-color{% else %}expense-color{% endif %}">
+            ₹{{ stats.this_month.balance|floatformat:2 }}
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    <!-- Monthly trend chart -->
+    <div class="card full-width">
+        <div class="card-header">
+            <span class="card-title">Income vs Expenses — Last 6 Months</span>
+        </div>
+        <div class="card-body">
+            <div class="chart-wrap">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent transactions -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">Recent Transactions</span>
+            <a href="{% url 'transaction_list' %}" class="btn btn-ghost btn-sm">View all →</a>
+        </div>
+        {% if stats.recent_transactions %}
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Category</th>
+                        <th>Amount</th>
+                        <th>Type</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tx in stats.recent_transactions %}
+                    <tr onclick="location.href='{% url 'transaction_detail' tx.pk %}'" style="cursor:pointer;">
+                        <td class="td-mono" style="color:var(--text-muted);">{{ tx.date|date:"d M" }}</td>
+                        <td>{{ tx.category.name|default:"—" }}</td>
+                        <td class="td-mono {% if tx.is_income %}income-color{% else %}expense-color{% endif %}">
+                            {% if tx.is_income %}+{% else %}-{% endif %}₹{{ tx.amount|floatformat:2 }}
+                        </td>
+                        <td>
+                            <span class="badge badge-{% if tx.is_income %}income{% else %}expense{% endif %}">
+                                {{ tx.transaction_type }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">⇄</div>
+            <div class="empty-title">No transactions yet</div>
+            {% if user.is_admin %}
+            <a href="{% url 'transaction_create' %}" class="btn btn-primary">Add your first transaction</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Top expense categories -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">Top Expense Categories</span>
+        </div>
+        <div class="card-body">
+            {% if stats.top_expense_categories %}
+                {% with max_val=stats.top_expense_categories.0.total %}
+                {% for item in stats.top_expense_categories %}
+                <div class="cat-bar-row">
+                    <div class="cat-bar-label">{{ item.category__name|default:"Other" }}</div>
+                    <div class="cat-bar-track">
+                        <div class="cat-bar-fill expense" style="width: {% widthratio item.total max_val 100 %}%"></div>
+                    </div>
+                    <div class="cat-bar-value">₹{{ item.total|floatformat:0 }}</div>
+                </div>
+                {% endfor %}
+                {% endwith %}
+            {% else %}
+                <div class="empty-state" style="padding:20px 0;">
+                    <div class="empty-sub">No expense data available yet.</div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+    const labels = {{ chart_labels|safe }};
+    const incomeData = {{ chart_income|safe }};
+    const expenseData = {{ chart_expense|safe }};
+
+    const ctx = document.getElementById('trendChart');
+    if (!ctx || !labels.length) return;
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Income',
+                    data: incomeData,
+                    backgroundColor: 'rgba(63, 185, 80, 0.7)',
+                    borderColor: '#3fb950',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                },
+                {
+                    label: 'Expenses',
+                    data: expenseData,
+                    backgroundColor: 'rgba(248, 81, 73, 0.7)',
+                    borderColor: '#f85149',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: { color: '#8b949e', font: { family: 'DM Sans', size: 12 } }
+                },
+                tooltip: {
+                    backgroundColor: '#1c2128',
+                    borderColor: '#30363d',
+                    borderWidth: 1,
+                    titleColor: '#e6edf3',
+                    bodyColor: '#8b949e',
+                    callbacks: {
+                        label: ctx => ' ₹' + ctx.parsed.y.toLocaleString('en-IN')
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: '#8b949e', font: { family: 'DM Mono', size: 11 } },
+                    grid: { color: '#21262d' }
+                },
+                y: {
+                    ticks: {
+                        color: '#8b949e',
+                        font: { family: 'DM Mono', size: 11 },
+                        callback: v => '₹' + v.toLocaleString('en-IN')
+                    },
+                    grid: { color: '#21262d' }
+                }
+            }
+        }
+    });
+})();
+</script>
+{% endblock %}

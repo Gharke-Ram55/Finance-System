@@ -1,0 +1,59 @@
+{% extends "base/base.html" %}
+{% block title %}Transaction #{{ transaction.pk }}{% endblock %}
+{% block page_title %}Transaction Detail{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-heading">Transaction #{{ transaction.pk }}</div>
+        <div class="page-sub">Recorded on {{ transaction.created_at|date:"d M Y, H:i" }}</div>
+    </div>
+    <div class="btn-group">
+        <a href="{% url 'transaction_list' %}" class="btn btn-secondary">← Back</a>
+        {% if user.is_admin %}
+        <a href="{% url 'transaction_edit' transaction.pk %}" class="btn btn-primary">Edit</a>
+        <a href="{% url 'transaction_delete' transaction.pk %}" class="btn btn-danger">Delete</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card form-card" style="max-width:560px;">
+    <div class="card-header">
+        <span class="card-title">
+            <span class="badge badge-{% if transaction.is_income %}income{% else %}expense{% endif %}">
+                {{ transaction.transaction_type }}
+            </span>
+        </span>
+        <span class="td-mono {% if transaction.is_income %}income-color{% else %}expense-color{% endif %}" style="font-size:20px; font-weight:600;">
+            {% if transaction.is_income %}+{% else %}-{% endif %}₹{{ transaction.amount|floatformat:2 }}
+        </span>
+    </div>
+    <div class="card-body">
+        <div class="detail-grid">
+            <div class="detail-item">
+                <div class="detail-label">Date</div>
+                <div class="detail-value">{{ transaction.date|date:"d F Y" }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Category</div>
+                <div class="detail-value">{{ transaction.category.name|default:"Uncategorized" }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Added By</div>
+                <div class="detail-value">{{ transaction.created_by.username|default:"—" }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Last Updated</div>
+                <div class="detail-value">{{ transaction.updated_at|date:"d M Y, H:i" }}</div>
+            </div>
+        </div>
+
+        {% if transaction.notes %}
+        <div class="detail-item" style="margin-top:12px;">
+            <div class="detail-label">Notes</div>
+            <div class="detail-value" style="margin-top:4px; white-space:pre-line;">{{ transaction.notes }}</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

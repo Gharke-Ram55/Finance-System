@@ -1,0 +1,53 @@
+{% extends "base/base.html" %}
+{% block title %}Categories{% endblock %}
+{% block page_title %}Categories{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-heading">Categories</div>
+        <div class="page-sub">Manage transaction categories</div>
+    </div>
+    <a href="{% url 'category_create' %}" class="btn btn-primary">+ New Category</a>
+</div>
+
+<div class="card">
+    {% if categories %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Type Hint</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cat in categories %}
+                <tr>
+                    <td style="font-weight:500;">{{ cat.name }}</td>
+                    <td>
+                        <span class="badge
+                            {% if cat.type_hint == 'income' %}badge-income
+                            {% elif cat.type_hint == 'expense' %}badge-expense
+                            {% else %}badge-neutral{% endif %}">
+                            {{ cat.get_type_hint_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{% url 'category_delete' cat.pk %}" class="btn btn-ghost btn-sm" style="color:var(--expense);">Delete</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">◈</div>
+        <div class="empty-title">No categories yet</div>
+        <a href="{% url 'category_create' %}" class="btn btn-primary">Create First Category</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

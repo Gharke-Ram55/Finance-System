@@ -1,0 +1,25 @@
+{% extends "base/base.html" %}
+{% block title %}Delete Category{% endblock %}
+{% block page_title %}Delete Category{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-heading">Delete Category</div>
+    <a href="{% url 'category_list' %}" class="btn btn-secondary">← Cancel</a>
+</div>
+
+<div class="card confirm-card">
+    <div class="card-body">
+        <div class="confirm-warning">
+            ⚠ Deleting "{{ category.name }}" will set affected transactions' category to blank. This cannot be undone.
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <div class="btn-group">
+                <button type="submit" class="btn btn-danger">Delete "{{ category.name }}"</button>
+                <a href="{% url 'category_list' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

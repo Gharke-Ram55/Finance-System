@@ -1,0 +1,74 @@
+{% extends "base/base.html" %}
+{% block title %}{{ action }} Transaction{% endblock %}
+{% block page_title %}{{ action }} Transaction{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-heading">{{ action }} Transaction</div>
+        <div class="page-sub">Fill in the details below. All fields marked are required.</div>
+    </div>
+    <a href="{% url 'transaction_list' %}" class="btn btn-secondary">← Back</a>
+</div>
+
+<div class="card form-card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Amount (₹) *</label>
+                    {{ form.amount }}
+                    {% if form.amount.errors %}
+                    <div class="form-error">{{ form.amount.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Transaction Type *</label>
+                    {{ form.transaction_type }}
+                    {% if form.transaction_type.errors %}
+                    <div class="form-error">{{ form.transaction_type.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    {{ form.category }}
+                    {% if form.category.errors %}
+                    <div class="form-error">{{ form.category.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Date *</label>
+                    {{ form.date }}
+                    {% if form.date.errors %}
+                    <div class="form-error">{{ form.date.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Notes / Description</label>
+                {{ form.notes }}
+                {% if form.notes.errors %}
+                <div class="form-error">{{ form.notes.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            {% if form.non_field_errors %}
+            <div class="alert alert-error" style="margin-bottom:16px;">{{ form.non_field_errors.0 }}</div>
+            {% endif %}
+
+            <div class="btn-group">
+                <button type="submit" class="btn btn-primary">
+                    {% if action == 'Edit' %}Save Changes{% else %}Add Transaction{% endif %}
+                </button>
+                <a href="{% url 'transaction_list' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

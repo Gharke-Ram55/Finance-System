@@ -1,0 +1,162 @@
+{% extends "base/base.html" %}
+{% block title %}Transactions{% endblock %}
+{% block page_title %}Transactions{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-heading">All Transactions</div>
+        <div class="page-sub">{{ total_count }} record{{ total_count|pluralize }} found</div>
+    </div>
+    <div class="btn-group">
+        {% if user.is_analyst %}
+        <a href="{% url 'export_csv' %}?{{ request.GET.urlencode }}" class="btn btn-secondary">↓ Export CSV</a>
+        {% endif %}
+        {% if user.is_admin %}
+        <a href="{% url 'transaction_create' %}" class="btn btn-primary">+ Add Transaction</a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Summary row for current filter -->
+<div class="stats-grid" style="grid-template-columns:repeat(3,1fr); margin-bottom:20px;">
+    <div class="stat-card income">
+        <div class="stat-label">Filtered Income</div>
+        <div class="stat-value income-color" style="font-size:20px;">₹{{ summary.total_income|floatformat:2 }}</div>
+    </div>
+    <div class="stat-card expense">
+        <div class="stat-label">Filtered Expenses</div>
+        <div class="stat-value expense-color" style="font-size:20px;">₹{{ summary.total_expense|floatformat:2 }}</div>
+    </div>
+    <div class="stat-card balance">
+        <div class="stat-label">Filtered Balance</div>
+        <div class="stat-value {% if summary.balance >= 0 %}income-color{% else %}expense-color{% endif %}" style="font-size:20px;">
+            ₹{{ summary.balance|floatformat:2 }}
+        </div>
+    </div>
+</div>
+
+<!-- Filter bar -->
+<form method="get">
+    <div class="filter-bar">
+        <div class="filter-group">
+            <label class="form-label">Type</label>
+            {{ filter_form.transaction_type }}
+        </div>
+        <div class="filter-group">
+            <label class="form-label">Category</label>
+            {{ filter_form.category }}
+        </div>
+        <div class="filter-group">
+            <label class="form-label">From</label>
+            {{ filter_form.date_from }}
+        </div>
+        <div class="filter-group">
+            <label class="form-label">To</label>
+            {{ filter_form.date_to }}
+        </div>
+        <div class="filter-group">
+            <label class="form-label">Search Notes</label>
+            {{ filter_form.search }}
+        </div>
+        <div class="filter-group">
+            <label class="form-label">Sort By</label>
+            {{ filter_form.sort }}
+        </div>
+        <div class="filter-group" style="justify-content:flex-end;">
+            <button type="submit" class="btn btn-primary">Apply</button>
+        </div>
+        {% if request.GET %}
+        <div class="filter-group" style="justify-content:flex-end;">
+            <a href="{% url 'transaction_list' %}" class="btn btn-secondary">Clear</a>
+        </div>
+        {% endif %}
+    </div>
+    {% if filter_form.non_field_errors %}
+    <div class="alert alert-error" style="margin-bottom:12px;">{{ filter_form.non_field_errors.0 }}</div>
+    {% endif %}
+</form>
+
+<!-- Table -->
+<div class="card">
+    {% if page_obj.object_list %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Category</th>
+                    <th>Amount</th>
+                    <th>Notes</th>
+                    <th>Added By</th>
+                    {% if user.is_admin %}<th>Actions</th>{% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for tx in page_obj %}
+                <tr>
+                    <td class="td-mono" style="color:var(--text-muted); font-size:12px;">{{ tx.pk }}</td>
+                    <td class="td-mono">{{ tx.date|date:"d M Y" }}</td>
+                    <td>
+                        <span class="badge badge-{% if tx.is_income %}income{% else %}expense{% endif %}">
+                            {{ tx.transaction_type }}
+                        </span>
+                    </td>
+                    <td style="color:var(--text-secondary);">{{ tx.category.name|default:"—" }}</td>
+                    <td class="td-mono {% if tx.is_income %}income-color{% else %}expense-color{% endif %}">
+                        {% if tx.is_income %}+{% else %}-{% endif %}₹{{ tx.amount|floatformat:2 }}
+                    </td>
+                    <td style="color:var(--text-muted); max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                        {{ tx.notes|default:"—" }}
+                    </td>
+                    <td style="color:var(--text-muted); font-size:12px;">
+                        {{ tx.created_by.username|default:"—" }}
+                    </td>
+                    {% if user.is_admin %}
+                    <td>
+                        <div class="btn-group">
+                            <a href="{% url 'transaction_edit' tx.pk %}" class="btn btn-ghost btn-sm" title="Edit">✎</a>
+                            <a href="{% url 'transaction_delete' tx.pk %}" class="btn btn-ghost btn-sm" style="color:var(--expense);" title="Delete">✕</a>
+                        </div>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination">
+        <span>Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }}</span>
+        <div class="page-links">
+            {% if page_obj.has_previous %}
+            <a class="page-link" href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">‹ Prev</a>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <span class="page-link current">{{ num }}</span>
+                {% elif num|add:"-2" <= page_obj.number and num|add:"2" >= page_obj.number %}
+                <a class="page-link" href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <a class="page-link" href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">Next ›</a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">⇄</div>
+        <div class="empty-title">No transactions found</div>
+        <div class="empty-sub">Try adjusting your filters or add a new transaction.</div>
+        {% if user.is_admin %}
+        <a href="{% url 'transaction_create' %}" class="btn btn-primary">+ Add Transaction</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

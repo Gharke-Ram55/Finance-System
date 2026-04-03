@@ -1,0 +1,45 @@
+{% extends "base/base.html" %}
+{% block title %}Delete Transaction{% endblock %}
+{% block page_title %}Delete Transaction{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-heading">Delete Transaction</div>
+    <a href="{% url 'transaction_list' %}" class="btn btn-secondary">← Cancel</a>
+</div>
+
+<div class="card confirm-card">
+    <div class="card-body">
+        <div class="confirm-warning">
+            ⚠ You are about to permanently delete this transaction. This action cannot be undone.
+        </div>
+        <div class="detail-grid" style="margin-bottom:24px;">
+            <div class="detail-item">
+                <div class="detail-label">Amount</div>
+                <div class="detail-value {% if transaction.is_income %}income-color{% else %}expense-color{% endif %} td-mono">
+                    ₹{{ transaction.amount|floatformat:2 }}
+                </div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Date</div>
+                <div class="detail-value">{{ transaction.date|date:"d M Y" }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Type</div>
+                <div class="detail-value">{{ transaction.get_transaction_type_display }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Category</div>
+                <div class="detail-value">{{ transaction.category.name|default:"—" }}</div>
+            </div>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <div class="btn-group">
+                <button type="submit" class="btn btn-danger">Yes, Delete It</button>
+                <a href="{% url 'transaction_list' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

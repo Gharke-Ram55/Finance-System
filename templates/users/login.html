@@ -1,0 +1,66 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In — FinTrack by Zorvyn</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+</head>
+<body>
+
+<div class="login-page">
+    <div class="login-card">
+        <div class="login-header">
+            <div class="login-brand">◈</div>
+            <div class="login-title">FinTrack</div>
+            <div class="login-sub">Zorvyn Finance System</div>
+        </div>
+        <div class="login-body">
+            {% if messages %}
+                {% for msg in messages %}
+                <div class="alert alert-{{ msg.tags }}" style="margin-bottom:16px;">
+                    <span>{{ msg }}</span>
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                        <div class="form-error">{{ form.username.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    {{ form.password }}
+                    {% if form.password.errors %}
+                        <div class="form-error">{{ form.password.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                {% if form.non_field_errors %}
+                <div class="form-error" style="margin-bottom:12px;">{{ form.non_field_errors.0 }}</div>
+                {% endif %}
+                <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:8px;">
+                    Sign In
+                </button>
+            </form>
+
+            <div style="margin-top:20px; padding:14px; background:var(--bg-elevated); border-radius:var(--radius); font-size:12px; color:var(--text-muted);">
+                <div style="font-weight:600; color:var(--text-secondary); margin-bottom:6px;">Demo Accounts</div>
+                <div>admin / admin123 &nbsp;·&nbsp; <span style="color:var(--warning)">Admin</span></div>
+                <div>analyst / analyst123 &nbsp;·&nbsp; <span style="color:var(--neutral)">Analyst</span></div>
+                <div>viewer / viewer123 &nbsp;·&nbsp; <span style="color:var(--text-secondary)">Viewer</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'js/main.js' %}"></script>
+</body>
+</html>

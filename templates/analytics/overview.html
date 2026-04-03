@@ -1,0 +1,234 @@
+{% extends "base/base.html" %}
+{% block title %}Analytics{% endblock %}
+{% block page_title %}Analytics{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-heading">Financial Analytics</div>
+        <div class="page-sub">Deep dive into your income and expense patterns over the last 12 months.</div>
+    </div>
+    <a href="{% url 'export_csv' %}" class="btn btn-secondary">↓ Export All</a>
+</div>
+
+<!-- Overall summary -->
+<div class="stats-grid" style="margin-bottom:24px;">
+    <div class="stat-card income">
+        <div class="stat-label">All-Time Income</div>
+        <div class="stat-value income-color">₹{{ overall.total_income|floatformat:2 }}</div>
+    </div>
+    <div class="stat-card expense">
+        <div class="stat-label">All-Time Expenses</div>
+        <div class="stat-value expense-color">₹{{ overall.total_expense|floatformat:2 }}</div>
+    </div>
+    <div class="stat-card balance">
+        <div class="stat-label">Net Balance</div>
+        <div class="stat-value {% if overall.balance >= 0 %}balance-color{% else %}balance-negative{% endif %}">
+            ₹{{ overall.balance|floatformat:2 }}
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-grid">
+
+    <!-- 12-month trend -->
+    <div class="card full-width">
+        <div class="card-header">
+            <span class="card-title">Monthly Trend — Last 12 Months</span>
+        </div>
+        <div class="card-body">
+            <div class="chart-wrap" style="height:280px;">
+                <canvas id="monthlyChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expense breakdown chart -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">Expenses by Category</span>
+        </div>
+        <div class="card-body">
+            <div class="chart-wrap" style="height:260px;">
+                <canvas id="expensePieChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Income breakdown chart -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">Income by Category</span>
+        </div>
+        <div class="card-body">
+            <div class="chart-wrap" style="height:260px;">
+                <canvas id="incomePieChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expense category table -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">Expense Breakdown</span>
+        </div>
+        <div class="card-body">
+            {% if expense_breakdown %}
+                {% with top=expense_breakdown.0.total %}
+                {% for item in expense_breakdown %}
+                <div class="cat-bar-row">
+                    <div class="cat-bar-label">{{ item.category__name|default:"Other" }}</div>
+                    <div class="cat-bar-track">
+                        <div class="cat-bar-fill expense" style="width:{% widthratio item.total top 100 %}%"></div>
+                    </div>
+                    <div class="cat-bar-value">₹{{ item.total|floatformat:0 }}</div>
+                </div>
+                {% endfor %}
+                {% endwith %}
+            {% else %}
+            <div class="empty-state" style="padding:16px 0;"><div class="empty-sub">No expense data available.</div></div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Income category table -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">Income Breakdown</span>
+        </div>
+        <div class="card-body">
+            {% if income_breakdown %}
+                {% with top=income_breakdown.0.total %}
+                {% for item in income_breakdown %}
+                <div class="cat-bar-row">
+                    <div class="cat-bar-label">{{ item.category__name|default:"Other" }}</div>
+                    <div class="cat-bar-track">
+                        <div class="cat-bar-fill" style="width:{% widthratio item.total top 100 %}%; background:var(--income);"></div>
+                    </div>
+                    <div class="cat-bar-value">₹{{ item.total|floatformat:0 }}</div>
+                </div>
+                {% endfor %}
+                {% endwith %}
+            {% else %}
+            <div class="empty-state" style="padding:16px 0;"><div class="empty-sub">No income data available.</div></div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+    const sharedOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { labels: { color: '#8b949e', font: { family: 'DM Sans', size: 12 }, boxWidth: 12 } },
+            tooltip: {
+                backgroundColor: '#1c2128',
+                borderColor: '#30363d',
+                borderWidth: 1,
+                titleColor: '#e6edf3',
+                bodyColor: '#8b949e',
+                callbacks: {
+                    label: ctx => ' ₹' + ctx.parsed.toLocaleString('en-IN')
+                }
+            }
+        }
+    };
+
+    // Monthly line chart
+    const mCtx = document.getElementById('monthlyChart');
+    if (mCtx) {
+        const labels = {{ monthly_labels|safe }};
+        const income = {{ monthly_income|safe }};
+        const expense = {{ monthly_expense|safe }};
+        new Chart(mCtx, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: 'Income',
+                        data: income,
+                        borderColor: '#3fb950',
+                        backgroundColor: 'rgba(63,185,80,0.1)',
+                        fill: true,
+                        tension: 0.35,
+                        pointBackgroundColor: '#3fb950',
+                        pointRadius: 4,
+                    },
+                    {
+                        label: 'Expenses',
+                        data: expense,
+                        borderColor: '#f85149',
+                        backgroundColor: 'rgba(248,81,73,0.08)',
+                        fill: true,
+                        tension: 0.35,
+                        pointBackgroundColor: '#f85149',
+                        pointRadius: 4,
+                    }
+                ]
+            },
+            options: {
+                ...sharedOptions,
+                plugins: {
+                    ...sharedOptions.plugins,
+                    tooltip: {
+                        ...sharedOptions.plugins.tooltip,
+                        callbacks: { label: ctx => ' ₹' + ctx.parsed.y.toLocaleString('en-IN') }
+                    }
+                },
+                scales: {
+                    x: { ticks: { color: '#8b949e', font: { family:'DM Mono', size:11 } }, grid: { color:'#21262d' } },
+                    y: {
+                        ticks: { color: '#8b949e', font: { family:'DM Mono', size:11 }, callback: v => '₹'+v.toLocaleString('en-IN') },
+                        grid: { color: '#21262d' }
+                    }
+                }
+            }
+        });
+    }
+
+    const pieColors = ['#f85149','#ff7b72','#ffa198','#ffc1bc','#d29922','#e3b341','#58a6ff','#79c0ff'];
+    const incomeColors = ['#3fb950','#56d364','#7ee787','#a8f5b9','#58a6ff','#79c0ff','#d29922','#e3b341'];
+
+    // Expense doughnut
+    const eCtx = document.getElementById('expensePieChart');
+    if (eCtx) {
+        const cats = {{ expense_cats|safe }};
+        const vals = {{ expense_vals|safe }};
+        if (cats.length) {
+            new Chart(eCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: cats,
+                    datasets: [{ data: vals, backgroundColor: pieColors, borderWidth: 2, borderColor: '#161b22' }]
+                },
+                options: { ...sharedOptions, cutout: '60%' }
+            });
+        }
+    }
+
+    // Income doughnut
+    const iCtx = document.getElementById('incomePieChart');
+    if (iCtx) {
+        const cats = {{ income_cats|safe }};
+        const vals = {{ income_vals|safe }};
+        if (cats.length) {
+            new Chart(iCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: cats,
+                    datasets: [{ data: vals, backgroundColor: incomeColors, borderWidth: 2, borderColor: '#161b22' }]
+                },
+                options: { ...sharedOptions, cutout: '60%' }
+            });
+        }
+    }
+})();
+</script>
+{% endblock %}
