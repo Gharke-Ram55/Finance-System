@@ -4,12 +4,28 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-dev-secret-key-change-in-production-zorvyn-fintrack'
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ['https://web-production-0e18.up.railway.app']
+if DEBUG:
+    ALLOWED_HOSTS = ['*']
+    CSRF_COOKIE_SECURE = False
+    SESSION_COOKIE_SECURE = False
+else:
+    ALLOWED_HOSTS = ['.up.railway.app']
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = True
+
 CSRF_TRUSTED_ORIGINS = [
-    "https://web-production-0e18.up.railway.app",
+    "https://*.up.railway.app",
 ]
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+
+USE_X_FORWARDED_HOST = True
+SECURE_SSL_REDIRECT = False
+
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
